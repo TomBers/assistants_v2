@@ -1,7 +1,8 @@
 from tool import get_tariffs
+import json
 
 def is_complete(run):
-    return run.status == "complete"
+    return run.status == "complete" or run.status == "completed"
 
 def get_result(client, thread):
     messages = client.beta.threads.messages.list(
@@ -16,7 +17,7 @@ def get_tool_results(run):
         if tool.function.name == "get_tariffs":
             tool_outputs.append({
                 "tool_call_id": tool.id,
-                "output": get_tariffs()
+                "output": json.dumps(get_tariffs())
             })
     return tool_outputs
 
