@@ -1,0 +1,32 @@
+from tool import get_tariffs
+
+def is_complete(run):
+    return run.status == "complete"
+
+def get_result(client, thread):
+    messages = client.beta.threads.messages.list(
+            thread_id=thread.id
+        )
+    return messages.data[0].content[0].text.value
+        
+def get_tool_results(run):
+    tool_outputs = []
+    # Loop through each tool in the required action section
+    for tool in run.required_action.submit_tool_outputs.tool_calls:
+        if tool.function.name == "get_tariffs":
+            tool_outputs.append({
+                "tool_call_id": tool.id,
+                "output": get_tariffs()
+            })
+    return tool_outputs
+
+def submit_tool_outputs(client, thread, run, tool_outputs):
+    try:
+        return client.beta.threads.runs.submit_tool_outputs_and_poll(
+            thread_id=thread.id,
+            run_id=run.id,
+            tool_outputs=tool_outputs
+        )
+        
+    except Exception as e:
+        print("Failed to submit tool outputs:", e) 
