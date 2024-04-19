@@ -2,7 +2,7 @@
     "name": "get_tariffs",
     "description": "Returns a list of available energy tariffs",
     "parameters": {
-        "type": "string",
+        "type": "object",
         "properties": {
             "postcode": {
                 "type": "string",
