@@ -1,4 +1,6 @@
-def get_tariffs():
+def get_tariffs(postcode):
+    print("get_tariffs called")
+    print(postcode)
     return [
         {
             "name": "Tariff 1",

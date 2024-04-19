@@ -15,9 +15,13 @@ def get_tool_results(run):
     # Loop through each tool in the required action section
     for tool in run.required_action.submit_tool_outputs.tool_calls:
         if tool.function.name == "get_tariffs":
+            print(tool)
+            function = tool.function
+            arguments = json.loads(function.arguments)
+            postcode = arguments['postcode']
             tool_outputs.append({
                 "tool_call_id": tool.id,
-                "output": json.dumps(get_tariffs())
+                "output": json.dumps(get_tariffs(postcode))
             })
     return tool_outputs
 

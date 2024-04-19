@@ -61,7 +61,6 @@ async def main(message: cl.Message):
     tool_outputs = get_tool_results(run)
     if tool_outputs:
         run = submit_tool_outputs(client, thread, run, tool_outputs)
-        print(run)
         if is_complete(run):
             await cl.Message(content=get_result(client, thread)).send()
         
