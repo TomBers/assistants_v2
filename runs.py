@@ -12,17 +12,16 @@ def get_result(client, thread):
         
 def get_tool_results(run):
     tool_outputs = []
-    # Loop through each tool in the required action section
-    for tool in run.required_action.submit_tool_outputs.tool_calls:
-        if tool.function.name == "get_tariffs":
-            print(tool)
-            function = tool.function
-            arguments = json.loads(function.arguments)
-            postcode = arguments['postcode']
-            tool_outputs.append({
-                "tool_call_id": tool.id,
-                "output": json.dumps(get_tariffs(postcode))
-            })
+    if run.required_action:
+        for tool in run.required_action.submit_tool_outputs.tool_calls:
+            if tool.function.name == "get_tariffs":
+                function = tool.function
+                arguments = json.loads(function.arguments)
+                postcode = arguments['postcode']
+                tool_outputs.append({
+                    "tool_call_id": tool.id,
+                    "output": json.dumps(get_tariffs(postcode))
+                })
     return tool_outputs
 
 def submit_tool_outputs(client, thread, run, tool_outputs):
