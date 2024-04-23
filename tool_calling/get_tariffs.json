@@ -7,10 +7,25 @@
             "customer_postcode": {
                 "type": "string",
                 "description": "The postcode of the property"
+            },
+            "energy_supplier": {
+                "type": "string",
+                "description": "The name of the energy supplier"
+            },
+            "tariff_name": {
+                "type": "string",
+                "description": "The name of the energy tariff"
+            },
+            "yearly_spend": {
+                "type": "number",
+                "description": "The yearly spend on energy"
             }
         },
         "required": [
-            "customer_postcode"
+            "customer_postcode",
+            "energy_supplier",
+            "tariff_name",
+            "yearly_spend"
         ]
     }
 }
