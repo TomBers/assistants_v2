@@ -14,6 +14,8 @@ def file_search():
 def build_tool(file_name):
     # Load Json and put in function
     func = json.load(open(file_name))
+    func.pop("base_url")
+    
     return {
         "type": "function",
         "function": func
