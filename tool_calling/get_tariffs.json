@@ -27,5 +27,6 @@
             "tariff_name",
             "yearly_spend"
         ]
-    }
+    },
+    "base_url": "http://localhost:8001"
 }

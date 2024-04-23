@@ -1,5 +1,5 @@
 import json
-import get_tariffs
+from test_http_approach import run_req
 
 
 def is_complete(run):
@@ -7,19 +7,17 @@ def is_complete(run):
 
 def run_tool(tool):
     tool_func = tool.function
-    func = getattr(get_tariffs, tool_func.name)
+    
     if isinstance(tool_func.arguments, str):
         # Convert the string to a dictionary
         arguments = json.loads(tool_func.arguments)
     else:
         # If it's already a dictionary, use it as is
         arguments = tool_func.arguments
-    
-    res = func(**arguments)
-    
+        
     return {
-                "tool_call_id": tool.id,
-                "output": json.dumps(res)
+            "tool_call_id": tool.id,
+            "output": json.dumps(run_req(arguments))
             }
 
 def get_result(client, thread):
