@@ -11,13 +11,14 @@ def get_result(client, thread):
     return messages.data[0].content[0].text.value
         
 def get_tool_results(run):
+    print(run)
     tool_outputs = []
     if run.required_action:
         for tool in run.required_action.submit_tool_outputs.tool_calls:
             if tool.function.name == "get_tariffs":
                 function = tool.function
                 arguments = json.loads(function.arguments)
-                postcode = arguments['postcode']
+                postcode = arguments['customer_postcode']
                 tool_outputs.append({
                     "tool_call_id": tool.id,
                     "output": json.dumps(get_tariffs(postcode))

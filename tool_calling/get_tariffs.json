@@ -4,13 +4,13 @@
     "parameters": {
         "type": "object",
         "properties": {
-            "postcode": {
+            "customer_postcode": {
                 "type": "string",
                 "description": "The postcode of the property"
             }
         },
         "required": [
-            "postcode"
+            "customer_postcode"
         ]
     }
 }

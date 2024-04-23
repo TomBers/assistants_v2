@@ -50,7 +50,7 @@ async def main(message: cl.Message):
     run = client.beta.threads.runs.create_and_poll(
         thread_id=thread.id,
         assistant_id=assistant.id,
-        instructions="Plase answer any questions the user may have about their energy bill.  You have access to a tool that will return other available energy tariffs with which to make a comparision.",
+        instructions="Plase answer any questions the user may have about their energy bill.  You have access to a tool that will return other available energy tariffs with which to make a comparision.  Make sure that the function is only called with the required parameters, or the answers will be wrong.",
         timeout=10.0
     )
     

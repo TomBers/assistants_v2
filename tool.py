@@ -1,6 +1,7 @@
 import json
 
 def add_tool_to_assistant(client, assistant_id):
+    # TODO - investigate how to avoid parameter halucinations (wording of function, prompt engineering, etc.)
     client.beta.assistants.update(
         assistant_id,
         tools=[build_tool("tool_calling/get_quality_score.json"), build_tool("tool_calling/get_tariffs.json")]
