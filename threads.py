@@ -20,7 +20,7 @@ def run_thread(client, thread, assistant, instructions, timeout=10.0):
 def build_tool_instruction():
     # Write a function that opens a json file called get_tariffs.json and extract out the names of all parmeters
     parameter_names = extract_parameter_names('tool_calling/get_tariffs.json')
-    inst = "Please call the function get_tariffs with the following parameters: "
+    inst = "From the uploaded document please extract these key parameters: "
     for p in parameter_names:
         inst += f"{p}, "
     return inst

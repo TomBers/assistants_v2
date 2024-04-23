@@ -1,16 +1,22 @@
 import json
-import importlib
-import sys
+import get_tariffs
 
-sys.path.append('tool_calling')
 
 def is_complete(run):
     return run.status == "complete" or run.status == "completed"
 
 def run_tool(tool):
     tool_func = tool.function
-    func = getattr(importlib.import_module(tool_func.name), tool_func.name)
-    res = func(**tool_func.arguments)
+    func = getattr(get_tariffs, tool_func.name)
+    if isinstance(tool_func.arguments, str):
+        # Convert the string to a dictionary
+        arguments = json.loads(tool_func.arguments)
+    else:
+        # If it's already a dictionary, use it as is
+        arguments = tool_func.arguments
+    
+    res = func(**arguments)
+    
     return {
                 "tool_call_id": tool.id,
                 "output": json.dumps(res)
@@ -28,7 +34,6 @@ def get_tool_results(run):
         for tool in run.required_action.submit_tool_outputs.tool_calls:
             tool_outputs.append(run_tool(tool))
     return tool_outputs
-
 
 
 def submit_tool_outputs(client, thread, run, tool_outputs):
