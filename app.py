@@ -1,6 +1,7 @@
 import chainlit as cl
 from openai import OpenAI
 from vector_store import retrieve_vector_store, file_upload, add_file_to_vector_store
+from runs import is_complete, get_result, get_tool_results, submit_tool_outputs
 
 
 @cl.on_chat_start
@@ -8,6 +9,7 @@ async def start():
     assisant_id = "asst_N9HxBMtsKvnsfPDvg9muOjjn"   
     client = OpenAI()
     assistant = client.beta.assistants.retrieve(assisant_id)
+
     vector_store = retrieve_vector_store(client)
     
     thread = client.beta.threads.create(
@@ -17,8 +19,6 @@ async def start():
                 }
             }
         )
-    
-    # print(thread)
     
     cl.user_session.set("client", client)
     cl.user_session.set("assistant", assistant)
@@ -39,29 +39,32 @@ async def main(message: cl.Message):
     if message.elements:
         for element in message.elements:
             file_object = file_upload(client, element)
-            vsf = add_file_to_vector_store(client, vector_store, file_object)
-            print(vsf)
+            vsf = add_file_to_vector_store(client, vector_store, file_object)            
     
     message = client.beta.threads.messages.create(
         thread_id=thread.id,
         role="user",
         content=message.content
     )
+    
     run = client.beta.threads.runs.create_and_poll(
         thread_id=thread.id,
         assistant_id=assistant.id,
-        instructions="Please address the user as Jane Doe."
+        instructions="Plase answer any questions the user may have about their energy bill.  You have access to a tool that will return other available energy tariffs with which to make a comparision.  Make sure that the function is only called with the required parameters, or the answers will be wrong.",
+        timeout=10.0
     )
-    if run.status == 'completed': 
-        messages = client.beta.threads.messages.list(
-            thread_id=thread.id
-        )
-        res = messages.data[0].content[0].text.value
-        print(res)
-        await cl.Message(content=res).send()
-    else:
-        return run.status
+    
+    if is_complete(run):
+        await cl.Message(content=get_result(client, thread)).send()
+            
+    # Check for tool_calls
+    tool_outputs = get_tool_results(run)
+    if tool_outputs:
+        run = submit_tool_outputs(client, thread, run, tool_outputs)
+        if is_complete(run):
+            await cl.Message(content=get_result(client, thread)).send()
         
+       
 @cl.on_chat_end
 def on_chat_end():
     print("The user disconnected!")

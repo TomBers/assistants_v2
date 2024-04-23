@@ -1,0 +1,16 @@
+{
+    "name": "get_tariffs",
+    "description": "Returns a list of available energy tariffs",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "customer_postcode": {
+                "type": "string",
+                "description": "The postcode of the property"
+            }
+        },
+        "required": [
+            "customer_postcode"
+        ]
+    }
+}
