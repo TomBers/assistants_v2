@@ -1,6 +1,7 @@
 import chainlit as cl
 from openai import OpenAI
 from vector_store import retrieve_vector_store, file_upload, add_file_to_vector_store, clean_up_files
+from threads import build_thread, run_thread, build_tool_instruction
 from runs import is_complete, get_result, get_tool_results, submit_tool_outputs
 
 
@@ -12,13 +13,7 @@ async def start():
 
     vector_store = retrieve_vector_store(client)
     
-    thread = client.beta.threads.create(
-        tool_resources={
-            "file_search": {
-                "vector_store_ids": [vector_store.id]
-                }
-            }
-        )
+    thread = build_thread(client, vector_store)
     # Ask for File to start
     files = None
 
@@ -29,6 +24,8 @@ async def start():
             max_size_mb=10
         ).send()
 
+    await cl.Message(content="").send()
+    
     file_objects = []
 
     for f in files:
@@ -36,17 +33,11 @@ async def start():
         file_objects.append(file_object)
         add_file_to_vector_store(client, vector_store, file_object)
     
-    run = client.beta.threads.runs.create_and_poll(
-        thread_id=thread.id,
-        assistant_id=assistant.id,
-        instructions="Please look at the documents and extract the following information: Customer postcode, energy supplier and tariff name and how much the spend on energy each year.",
-        timeout=10.0
-    )
+    instuctuction = build_tool_instruction()
+    run = run_thread(client, thread, assistant, instuctuction) 
     
     if is_complete(run):
         await cl.Message(content="Documents processed, you can now ask anything you want").send()
-    
-    
     
     cl.user_session.set("client", client)
     cl.user_session.set("assistant", assistant)
@@ -61,14 +52,15 @@ async def main(message: cl.Message):
     await msg.send()
     
     client = cl.user_session.get("client")
-    vector_store = cl.user_session.get("vector_store")
+    # vector_store = cl.user_session.get("vector_store")
     thread = cl.user_session.get("thread")
     assistant = cl.user_session.get("assistant")
     
-    if message.elements:
-        for element in message.elements:
-            file_object = file_upload(client, element)
-            vsf = add_file_to_vector_store(client, vector_store, file_object)            
+    # Moved to start of process
+    # if message.elements:
+    #     for element in message.elements:
+    #         file_object = file_upload(client, element)
+    #         vsf = add_file_to_vector_store(client, vector_store, file_object)            
     
     message = client.beta.threads.messages.create(
         thread_id=thread.id,
@@ -76,12 +68,7 @@ async def main(message: cl.Message):
         content=message.content
     )
     
-    run = client.beta.threads.runs.create_and_poll(
-        thread_id=thread.id,
-        assistant_id=assistant.id,
-        instructions="Plase answer any questions the user may have about their energy bill.  You have access to a tool that will return other available energy tariffs with which to make a comparision.  Make sure that the function is only called with the required parameters, or the answers will be wrong.",
-        timeout=10.0
-    )
+    run = run_thread(client, thread, assistant, "Please answer the above user question")
     
     if is_complete(run):
         await cl.Message(content=get_result(client, thread)).send()

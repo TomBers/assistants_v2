@@ -1,8 +1,20 @@
-from tool import get_tariffs
 import json
+import importlib
+import sys
+
+sys.path.append('tool_calling')
 
 def is_complete(run):
     return run.status == "complete" or run.status == "completed"
+
+def run_tool(tool):
+    tool_func = tool.function
+    func = getattr(importlib.import_module(tool_func.name), tool_func.name)
+    res = func(**tool_func.arguments)
+    return {
+                "tool_call_id": tool.id,
+                "output": json.dumps(res)
+            }
 
 def get_result(client, thread):
     messages = client.beta.threads.messages.list(
@@ -11,19 +23,13 @@ def get_result(client, thread):
     return messages.data[0].content[0].text.value
         
 def get_tool_results(run):
-    print(run)
     tool_outputs = []
     if run.required_action:
         for tool in run.required_action.submit_tool_outputs.tool_calls:
-            if tool.function.name == "get_tariffs":
-                function = tool.function
-                arguments = json.loads(function.arguments)
-                postcode = arguments['customer_postcode']
-                tool_outputs.append({
-                    "tool_call_id": tool.id,
-                    "output": json.dumps(get_tariffs(postcode))
-                })
+            tool_outputs.append(run_tool(tool))
     return tool_outputs
+
+
 
 def submit_tool_outputs(client, thread, run, tool_outputs):
     try:

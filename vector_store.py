@@ -7,8 +7,8 @@ def add_file_to_vector_store(client, vector_store, file):
 
 def clean_up_files(client, vector_store, files):
     for f in files:
-        client.files.delete(file_id=f.id)
         client.beta.vector_stores.files.delete(vector_store_id=vector_store.id, file_id=f.id)
+        client.files.delete(file_id=f.id)
 
 def file_upload(client, file):
     return client.files.create(file=open(file.path, "rb"), purpose="assistants")
