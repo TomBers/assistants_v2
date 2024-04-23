@@ -1,6 +1,6 @@
 import chainlit as cl
 from openai import OpenAI
-from vector_store import retrieve_vector_store, file_upload, add_file_to_vector_store
+from vector_store import retrieve_vector_store, file_upload, add_file_to_vector_store, clean_up_files
 from runs import is_complete, get_result, get_tool_results, submit_tool_outputs
 
 
@@ -19,11 +19,40 @@ async def start():
                 }
             }
         )
+    # Ask for File to start
+    files = None
+
+    # Wait for the user to upload a file
+    while files == None:
+        files = await cl.AskFileMessage(
+            content="Please upload a text file to begin!", accept=["application/pdf"],
+            max_size_mb=10
+        ).send()
+
+    file_objects = []
+
+    for f in files:
+        file_object = file_upload(client, f)
+        file_objects.append(file_object)
+        add_file_to_vector_store(client, vector_store, file_object)
+    
+    run = client.beta.threads.runs.create_and_poll(
+        thread_id=thread.id,
+        assistant_id=assistant.id,
+        instructions="Please look at the documents and extract the following information: Customer postcode, energy supplier and tariff name and how much the spend on energy each year.",
+        timeout=10.0
+    )
+    
+    if is_complete(run):
+        await cl.Message(content="Documents processed, you can now ask anything you want").send()
+    
+    
     
     cl.user_session.set("client", client)
     cl.user_session.set("assistant", assistant)
     cl.user_session.set("thread", thread)
     cl.user_session.set("vector_store", vector_store)
+    cl.user_session.set("files", file_objects)
     
 
 @cl.on_message
@@ -68,6 +97,7 @@ async def main(message: cl.Message):
 @cl.on_chat_end
 def on_chat_end():
     print("The user disconnected!")
+    clean_up_files(cl.user_session.get("client"), cl.user_session.get("vector_store"), cl.user_session.get("files"))
     
 if __name__ == "__main__":
     from chainlit.cli import run_chainlit
